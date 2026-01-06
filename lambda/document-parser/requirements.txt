@@ -1,0 +1,15 @@
+# Document parsing libraries
+# Uncomment and install as needed for production
+
+# PDF parsing
+# PyPDF2==3.0.1
+# pdfplumber==0.10.3
+
+# Word document parsing
+# python-docx==1.1.0
+
+# CSV parsing (included in Python standard library)
+# pandas==2.1.4  # Optional, for advanced CSV processing
+
+# No external dependencies in this example (placeholder implementation)
+

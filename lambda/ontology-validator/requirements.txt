@@ -1,0 +1,7 @@
+# Ontology validator dependencies
+urllib3==2.1.0
+
+# Optional: For production, use rdflib for proper RDF parsing
+# rdflib==7.0.0
+# owlrl==6.0.2  # For OWL reasoning and validation
+

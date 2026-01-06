@@ -1,0 +1,374 @@
+@prefix : <http://graph-rag.example.com/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<http://graph-rag.example.com/ontology> rdf:type owl:Ontology ;
+    dcterms:title "Graph RAG Ontology"@en ;
+    dcterms:description "OWL ontology for Graph-based Retrieval Augmented Generation system with document processing, entity extraction, and semantic search"@en ;
+    dcterms:created "2025-01-05"^^xsd:date ;
+    dcterms:creator "Graph RAG System" ;
+    owl:versionInfo "1.0" ;
+    rdfs:comment "This ontology defines the structure for documents, text chunks, entities, embeddings, and their relationships in a Graph RAG system."@en .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  Document Class
+:Document rdf:type owl:Class ;
+    rdfs:label "Document"@en ;
+    rdfs:comment "A document uploaded to the Graph RAG system for processing and indexing."@en ;
+    rdfs:subClassOf foaf:Document ,
+                   [ rdf:type owl:Restriction ;
+                     owl:onProperty :hasId ;
+                     owl:cardinality "1"^^xsd:nonNegativeInteger
+                   ] ,
+                   [ rdf:type owl:Restriction ;
+                     owl:onProperty :hasFileName ;
+                     owl:cardinality "1"^^xsd:nonNegativeInteger
+                   ] ,
+                   [ rdf:type owl:Restriction ;
+                     owl:onProperty :hasChunk ;
+                     owl:minCardinality "1"^^xsd:nonNegativeInteger
+                   ] ,
+                   [ rdf:type owl:Restriction ;
+                     owl:onProperty :createdAt ;
+                     owl:cardinality "1"^^xsd:nonNegativeInteger
+                   ] .
+
+###  TextChunk Class
+:TextChunk rdf:type owl:Class ;
+    rdfs:label "Text Chunk"@en ;
+    rdfs:comment "A segment of text extracted from a document for processing and embedding generation."@en ;
+    rdfs:subClassOf [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasText ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasChunkId ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasStartPosition ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasEmbedding ;
+                      owl:maxCardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :mentions ;
+                      owl:minCardinality "0"^^xsd:nonNegativeInteger
+                    ] .
+
+###  Entity Class
+:Entity rdf:type owl:Class ;
+    rdfs:label "Entity"@en ;
+    rdfs:comment "A named entity extracted from document text (person, organization, concept, etc.)"@en ;
+    rdfs:subClassOf [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasValue ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] .
+
+###  Entity Subclasses (following NER conventions)
+:Person rdf:type owl:Class ;
+    rdfs:label "Person"@en ;
+    rdfs:comment "A person entity mentioned in documents."@en ;
+    rdfs:subClassOf :Entity , foaf:Person .
+
+:Organization rdf:type owl:Class ;
+    rdfs:label "Organization"@en ;
+    rdfs:comment "An organization entity mentioned in documents."@en ;
+    rdfs:subClassOf :Entity , foaf:Organization .
+
+:Location rdf:type owl:Class ;
+    rdfs:label "Location"@en ;
+    rdfs:comment "A location or place entity mentioned in documents."@en ;
+    rdfs:subClassOf :Entity .
+
+:Concept rdf:type owl:Class ;
+    rdfs:label "Concept"@en ;
+    rdfs:comment "An abstract concept or topic entity."@en ;
+    rdfs:subClassOf :Entity , skos:Concept .
+
+###  Keyword Class
+:Keyword rdf:type owl:Class ;
+    rdfs:label "Keyword"@en ;
+    rdfs:comment "A keyword tag associated with a document."@en ;
+    rdfs:subClassOf [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasValue ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] .
+
+###  Author Class
+:Author rdf:type owl:Class ;
+    rdfs:label "Author"@en ;
+    rdfs:comment "The author or creator of a document."@en ;
+    rdfs:subClassOf foaf:Person ,
+                   [ rdf:type owl:Restriction ;
+                     owl:onProperty :hasName ;
+                     owl:cardinality "1"^^xsd:nonNegativeInteger
+                   ] .
+
+###  DocumentType Class
+:DocumentType rdf:type owl:Class ;
+    rdfs:label "Document Type"@en ;
+    rdfs:comment "Classification of document types (policy, report, specification, etc.)"@en .
+
+### Common Document Types
+:Policy rdf:type owl:Class ;
+    rdfs:label "Policy"@en ;
+    rdfs:subClassOf :DocumentType .
+
+:Standard rdf:type owl:Class ;
+    rdfs:label "Standard"@en ;
+    rdfs:subClassOf :DocumentType .
+
+:Report rdf:type owl:Class ;
+    rdfs:label "Report"@en ;
+    rdfs:subClassOf :DocumentType .
+
+:Specification rdf:type owl:Class ;
+    rdfs:label "Specification"@en ;
+    rdfs:subClassOf :DocumentType .
+
+###  Embedding Class
+:Embedding rdf:type owl:Class ;
+    rdfs:label "Embedding"@en ;
+    rdfs:comment "Vector embedding representation of text for semantic search."@en ;
+    rdfs:subClassOf [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasVector ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasDimensions ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :generatedBy ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  Document Properties
+:hasChunk rdf:type owl:ObjectProperty ;
+    rdfs:label "has chunk"@en ;
+    rdfs:comment "Relates a document to its text chunks."@en ;
+    rdfs:domain :Document ;
+    rdfs:range :TextChunk .
+
+:hasKeyword rdf:type owl:ObjectProperty ;
+    rdfs:label "has keyword"@en ;
+    rdfs:comment "Associates a document with a keyword tag."@en ;
+    rdfs:domain :Document ;
+    rdfs:range :Keyword .
+
+:hasAuthor rdf:type owl:ObjectProperty ;
+    rdfs:label "has author"@en ;
+    rdfs:comment "Relates a document to its author."@en ;
+    rdfs:domain :Document ;
+    rdfs:range :Author .
+
+:hasType rdf:type owl:ObjectProperty ;
+    rdfs:label "has type"@en ;
+    rdfs:comment "Specifies the type classification of a document."@en ;
+    rdfs:domain :Document ;
+    rdfs:range :DocumentType .
+
+###  TextChunk Properties
+:mentions rdf:type owl:ObjectProperty ;
+    rdfs:label "mentions"@en ;
+    rdfs:comment "Indicates that a text chunk mentions an entity."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range :Entity .
+
+:hasEmbedding rdf:type owl:ObjectProperty ;
+    rdfs:label "has embedding"@en ;
+    rdfs:comment "Associates a text chunk with its vector embedding."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range :Embedding .
+
+:partOf rdf:type owl:ObjectProperty ;
+    rdfs:label "part of"@en ;
+    rdfs:comment "Indicates that a chunk is part of a document."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range :Document ;
+    owl:inverseOf :hasChunk .
+
+###  Entity Properties
+:relatedTo rdf:type owl:ObjectProperty , owl:SymmetricProperty ;
+    rdfs:label "related to"@en ;
+    rdfs:comment "Indicates a semantic relationship between entities."@en ;
+    rdfs:domain :Entity ;
+    rdfs:range :Entity .
+
+:coOccursWith rdf:type owl:ObjectProperty , owl:SymmetricProperty ;
+    rdfs:label "co-occurs with"@en ;
+    rdfs:comment "Indicates that two entities co-occur in the same text chunk."@en ;
+    rdfs:domain :Entity ;
+    rdfs:range :Entity .
+
+#################################################################
+#    Data Properties
+#################################################################
+
+###  Identifier Properties
+:hasId rdf:type owl:DatatypeProperty ;
+    rdfs:label "has identifier"@en ;
+    rdfs:comment "Unique identifier for a resource."@en ;
+    rdfs:range xsd:string .
+
+:hasChunkId rdf:type owl:DatatypeProperty ;
+    rdfs:label "has chunk identifier"@en ;
+    rdfs:comment "Numeric identifier for a text chunk within a document."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range xsd:integer .
+
+###  Text Content Properties
+:hasText rdf:type owl:DatatypeProperty ;
+    rdfs:label "has text"@en ;
+    rdfs:comment "The text content of a chunk or entity."@en ;
+    rdfs:range xsd:string .
+
+:hasFileName rdf:type owl:DatatypeProperty ;
+    rdfs:label "has file name"@en ;
+    rdfs:comment "Original filename of the uploaded document."@en ;
+    rdfs:domain :Document ;
+    rdfs:range xsd:string .
+
+:hasValue rdf:type owl:DatatypeProperty ;
+    rdfs:label "has value"@en ;
+    rdfs:comment "The string value of an entity or keyword."@en ;
+    rdfs:range xsd:string .
+
+:hasName rdf:type owl:DatatypeProperty ;
+    rdfs:label "has name"@en ;
+    rdfs:comment "The name of a person or entity."@en ;
+    rdfs:range xsd:string .
+
+###  Numeric Properties
+:hasTextLength rdf:type owl:DatatypeProperty ;
+    rdfs:label "has text length"@en ;
+    rdfs:comment "Length of text in characters."@en ;
+    rdfs:range xsd:integer .
+
+:hasStartPosition rdf:type owl:DatatypeProperty ;
+    rdfs:label "has start position"@en ;
+    rdfs:comment "Starting character position of a chunk in the document."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range xsd:integer .
+
+:hasEndPosition rdf:type owl:DatatypeProperty ;
+    rdfs:label "has end position"@en ;
+    rdfs:comment "Ending character position of a chunk in the document."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range xsd:integer .
+
+:hasLength rdf:type owl:DatatypeProperty ;
+    rdfs:label "has length"@en ;
+    rdfs:comment "Length of a text chunk in characters."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range xsd:integer .
+
+###  Embedding Properties
+:hasVector rdf:type owl:DatatypeProperty ;
+    rdfs:label "has vector"@en ;
+    rdfs:comment "The embedding vector (serialized as string or list)."@en ;
+    rdfs:domain :Embedding ;
+    rdfs:range xsd:string .
+
+:hasDimensions rdf:type owl:DatatypeProperty ;
+    rdfs:label "has dimensions"@en ;
+    rdfs:comment "Dimensionality of the embedding vector."@en ;
+    rdfs:domain :Embedding ;
+    rdfs:range xsd:integer .
+
+:generatedBy rdf:type owl:DatatypeProperty ;
+    rdfs:label "generated by"@en ;
+    rdfs:comment "The model or system that generated the embedding."@en ;
+    rdfs:domain :Embedding ;
+    rdfs:range xsd:string .
+
+###  Temporal Properties
+:createdAt rdf:type owl:DatatypeProperty ;
+    rdfs:label "created at"@en ;
+    rdfs:comment "Timestamp when the resource was created."@en ;
+    rdfs:range xsd:dateTime .
+
+:updatedAt rdf:type owl:DatatypeProperty ;
+    rdfs:label "updated at"@en ;
+    rdfs:comment "Timestamp when the resource was last updated."@en ;
+    rdfs:range xsd:dateTime .
+
+###  Score and Confidence Properties
+:hasConfidenceScore rdf:type owl:DatatypeProperty ;
+    rdfs:label "has confidence score"@en ;
+    rdfs:comment "Confidence score for entity extraction or classification (0-1)."@en ;
+    rdfs:range xsd:decimal .
+
+:hasRelevanceScore rdf:type owl:DatatypeProperty ;
+    rdfs:label "has relevance score"@en ;
+    rdfs:comment "Relevance or similarity score for search results."@en ;
+    rdfs:range xsd:decimal .
+
+#################################################################
+#    Annotation Properties
+#################################################################
+
+:source rdf:type owl:AnnotationProperty ;
+    rdfs:label "source"@en ;
+    rdfs:comment "Source system or process that created the triple."@en .
+
+:processingVersion rdf:type owl:AnnotationProperty ;
+    rdfs:label "processing version"@en ;
+    rdfs:comment "Version of the processing pipeline that created this data."@en .
+
+#################################################################
+#    Inference Rules (expressed as OWL axioms)
+#################################################################
+
+### If two entities are mentioned in the same chunk, they co-occur
+### This would be inferred by a reasoner:
+### ?chunk :mentions ?entity1 .
+### ?chunk :mentions ?entity2 .
+### FILTER(?entity1 != ?entity2)
+### => ?entity1 :coOccursWith ?entity2
+
+### If a document has a chunk, the chunk is part of that document
+### (already defined via owl:inverseOf)
+
+#################################################################
+#    Named Individuals (Examples for testing)
+#################################################################
+
+:examplePolicy rdf:type owl:NamedIndividual , :Document , :Policy ;
+    :hasId "example-uuid-123" ;
+    :hasFileName "security-policy.pdf" ;
+    :hasTextLength "5000"^^xsd:integer ;
+    :createdAt "2025-01-05T10:00:00Z"^^xsd:dateTime ;
+    rdfs:comment "Example policy document for ontology validation."@en .
+
+:exampleChunk rdf:type owl:NamedIndividual , :TextChunk ;
+    :hasChunkId "0"^^xsd:integer ;
+    :hasText "This is an example text chunk from a security policy document." ;
+    :hasStartPosition "0"^^xsd:integer ;
+    :hasLength "63"^^xsd:integer ;
+    :partOf :examplePolicy .
+
+:exampleEntity rdf:type owl:NamedIndividual , :Organization ;
+    :hasValue "AWS" ;
+    rdfs:comment "Example organization entity."@en .
+
+### Generated by Graph RAG Ontology Builder v1.0
+### Compatible with Amazon Neptune and standard OWL reasoners
+

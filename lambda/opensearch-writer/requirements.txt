@@ -1,0 +1,6 @@
+# OpenSearch writer dependencies
+urllib3==2.1.0
+
+# Alternative: Use opensearch-py client library
+# opensearch-py==2.4.0
+
