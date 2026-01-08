@@ -4,113 +4,45 @@
 
 ```mermaid
 graph TB
-    subgraph "User Layer"
-        User[👤 User/Client]
-    end
+    User["User/Client"]
+    APIGW["API Gateway - REST API"]
+    UploadLambda["Lambda - Upload Handler"]
+    S3["S3 Bucket - Documents"]
+    EventBridge["EventBridge - Event Rules"]
+    StepFunctions["Step Functions - State Machine"]
+    DLQ["SQS DLQ - Failed Events"]
+    DocParser["Lambda - Document Parser"]
+    RDFGen["Lambda - RDF Generator"]
+    OntologyVal["Lambda - Ontology Validator NEW"]
+    NeptuneWriter["Lambda - Neptune Writer"]
+    EmbedGen["Lambda - Embedding Generator"]
+    OSWriter["Lambda - OpenSearch Writer"]
+    SageMaker["SageMaker Endpoint - Hugging Face"]
+    Neptune["Neptune Cluster - Graph Database"]
+    OpenSearch["OpenSearch - Vector Search"]
+    OWL["OWL Ontology - graph-rag-ontology.ttl NEW"]
+    CloudWatch["CloudWatch - Logs"]
 
-    subgraph "API Layer"
-        APIGW[🌐 API Gateway<br/>REST API]
-        UploadLambda[⚡ Lambda<br/>Upload Handler]
-    end
-
-    subgraph "Storage Layer"
-        S3[🪣 S3 Bucket<br/>Documents & Staging]
-    end
-
-    subgraph "Event & Orchestration"
-        EventBridge[📡 EventBridge<br/>Event Rules]
-        StepFunctions[🔄 Step Functions<br/>State Machine]
-        DLQ[📮 SQS DLQ<br/>Failed Events]
-    end
-
-    subgraph "Processing Layer - VPC"
-        subgraph "Lambda Functions"
-            DocParser[⚡ Lambda<br/>Document Parser]
-            RDFGen[⚡ Lambda<br/>RDF Generator]
-            OntologyVal[⚡ Lambda<br/>Ontology Validator<br/>🆕 NEW]
-            NeptuneWriter[⚡ Lambda<br/>Neptune Writer]
-            EmbedGen[⚡ Lambda<br/>Embedding Generator<br/>SageMaker]
-            OSWriter[⚡ Lambda<br/>OpenSearch Writer]
-        end
-    end
-
-    subgraph "ML Layer"
-        SageMaker[🤖 SageMaker Endpoint<br/>Embedding Model<br/>Hugging Face]
-    end
-
-    subgraph "Data Stores - VPC"
-        Neptune[🔵 Neptune Cluster<br/>Graph Database<br/>RDF/SPARQL]
-        OpenSearch[🔍 OpenSearch Domain<br/>Vector Search<br/>k-NN]
-    end
-
-    subgraph "Ontology"
-        OWL[📋 OWL Ontology<br/>graph-rag-ontology.ttl<br/>🆕 NEW]
-    end
-
-    subgraph "Networking"
-        VPC[🏢 VPC<br/>10.0.0.0/16]
-        PrivateSubnet[🔒 Private Subnets<br/>Neptune, OpenSearch, Lambda]
-        PublicSubnet[🌍 Public Subnets<br/>NAT Gateway]
-        SG[🛡️ Security Groups<br/>Neptune, OpenSearch, Lambda]
-    end
-
-    subgraph "Monitoring"
-        CloudWatch[📊 CloudWatch<br/>Logs & Metrics]
-        XRay[🔬 X-Ray<br/>Tracing]
-    end
-
-    %% User Flow
-    User -->|1. Upload Document| APIGW
+    User -->|1. Upload| APIGW
     APIGW -->|2. Invoke| UploadLambda
     UploadLambda -->|3. Store| S3
-    
-    %% Event Trigger
-    S3 -.->|4. Object Created Event| EventBridge
+    S3 -.->|4. Event| EventBridge
     EventBridge -->|5. Trigger| StepFunctions
     EventBridge -.->|Failed| DLQ
-
-    %% Processing Pipeline
-    StepFunctions -->|6a. Parse| DocParser
-    DocParser -->|7. Text & Chunks| RDFGen
-    RDFGen -->|8. RDF Triples| OntologyVal
+    StepFunctions -->|6. Parse| DocParser
+    DocParser -->|7. Text| RDFGen
+    RDFGen -->|8. RDF| OntologyVal
     OntologyVal -->|9. Validate| OWL
-    
-    %% Parallel Processing
-    OntologyVal -->|10a. Valid RDF| NeptuneWriter
+    OntologyVal -->|10a. Valid| NeptuneWriter
     OntologyVal -->|10b. Chunks| EmbedGen
-    
-    %% Neptune Path
-    NeptuneWriter -->|11. Stage RDF| S3
-    S3 -->|12. Bulk Load| Neptune
-    
-    %% Embedding Path
+    NeptuneWriter -->|11. Stage| S3
+    S3 -->|12. Load| Neptune
     EmbedGen -->|13. Generate| SageMaker
     SageMaker -->|14. Vectors| EmbedGen
     EmbedGen -->|15. Index| OSWriter
     OSWriter -->|16. Store| OpenSearch
-
-    %% VPC Connections
-    DocParser -.->|In| VPC
-    RDFGen -.->|In| VPC
-    OntologyVal -.->|In| VPC
-    NeptuneWriter -.->|In| VPC
-    EmbedGen -.->|In| VPC
-    OSWriter -.->|In| VPC
-    
-    Neptune -.->|In| PrivateSubnet
-    OpenSearch -.->|In| PrivateSubnet
-    
-    %% Monitoring
     StepFunctions -.->|Logs| CloudWatch
-    DocParser -.->|Logs| CloudWatch
-    RDFGen -.->|Logs| CloudWatch
-    OntologyVal -.->|Logs| CloudWatch
-    NeptuneWriter -.->|Logs| CloudWatch
-    EmbedGen -.->|Logs| CloudWatch
-    OSWriter -.->|Logs| CloudWatch
-    StepFunctions -.->|Traces| XRay
-
-    %% Styling
+    
     classDef awsOrange fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#fff
     classDef awsBlue fill:#3B48CC,stroke:#232F3E,stroke-width:2px,color:#fff
     classDef awsGreen fill:#3F8624,stroke:#232F3E,stroke-width:2px,color:#fff
@@ -130,26 +62,23 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant User as 👤 User
-    participant API as 🌐 API Gateway
-    participant Upload as ⚡ Upload Lambda
-    participant S3 as 🪣 S3 Bucket
-    participant EB as 📡 EventBridge
-    participant SF as 🔄 Step Functions
+    participant User
+    participant API as API Gateway
+    participant Upload as Upload Lambda
+    participant S3 as S3 Bucket
+    participant EB as EventBridge
+    participant SF as Step Functions
 
-    User->>API: POST /upload<br/>{fileName, fileContent, metadata}
+    User->>API: POST /upload
     API->>Upload: Invoke with request
-    
-    Upload->>Upload: Validate file type & size
-    Upload->>Upload: Generate document UUID
-    Upload->>S3: PutObject<br/>s3://bucket/documents/{uuid}/{file}
-    Upload->>S3: Add tags (metadata)
-    Upload-->>API: {documentId, s3Key, success}
+    Upload->>Upload: Validate file
+    Upload->>Upload: Generate UUID
+    Upload->>S3: PutObject
+    Upload->>S3: Add tags
+    Upload-->>API: Success response
     API-->>User: Upload confirmation
-    
     S3->>EB: Object Created Event
-    EB->>SF: Start Execution<br/>{bucket, key, metadata}
-    
+    EB->>SF: Start Execution
     Note over SF: Processing pipeline starts
 ```
 
@@ -223,40 +152,24 @@ stateDiagram-v2
     ParallelProcessing --> Success
     Failed --> [*]
     Success --> [*]
-    
-    note right of ValidateOntology
-        🆕 NEW STEP
-        Validates against
-        OWL ontology
-    end note
 ```
 
 ## Data Flow with Ontology Validation
 
 ```mermaid
 graph LR
-    subgraph "Input"
-        Doc[📄 Document<br/>PDF/DOCX/CSV]
-    end
-
-    subgraph "Processing"
-        Parse[⚡ Parse<br/>Extract Text]
-        RDF[⚡ Generate RDF<br/>Triples]
-        Validate[⚡ Validate<br/>🆕 NEW]
-        Onto[📋 OWL Ontology<br/>Classes & Rules]
-    end
-
-    subgraph "Validation Rules"
-        R1[✓ Class Membership]
-        R2[✓ Cardinality]
-        R3[✓ Domain/Range]
-        R4[✓ Required Props]
-    end
-
-    subgraph "Output Stores"
-        Nep[🔵 Neptune<br/>Graph]
-        OS[🔍 OpenSearch<br/>Vectors]
-    end
+    Doc["Document - PDF/DOCX/CSV"]
+    Parse["Parse - Extract Text"]
+    RDF["Generate RDF Triples"]
+    Validate["Validate - NEW"]
+    Onto["OWL Ontology - Classes & Rules"]
+    R1["Check Class Membership"]
+    R2["Check Cardinality"]
+    R3["Check Domain/Range"]
+    R4["Check Required Props"]
+    Nep["Neptune - Graph"]
+    OS["OpenSearch - Vectors"]
+    DLQ2["DLQ"]
 
     Doc --> Parse
     Parse --> RDF
@@ -266,15 +179,13 @@ graph LR
     Onto --> R2
     Onto --> R3
     Onto --> R4
-    
     R1 --> Validate
     R2 --> Validate
     R3 --> Validate
     R4 --> Validate
-    
-    Validate -->|✅ Pass| Nep
-    Validate -->|✅ Pass| OS
-    Validate -->|❌ Fail| DLQ[📮 DLQ]
+    Validate -->|Pass| Nep
+    Validate -->|Pass| OS
+    Validate -->|Fail| DLQ2
 
     style Validate fill:#00D4AA,stroke:#232F3E,stroke-width:3px
     style Onto fill:#00D4AA,stroke:#232F3E,stroke-width:3px
@@ -284,66 +195,34 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "AWS Cloud"
-        subgraph "VPC - 10.0.0.0/16"
-            subgraph "Availability Zone 1"
-                PublicSubnet1[🌍 Public Subnet<br/>10.0.0.0/24]
-                PrivateSubnet1[🔒 Private Subnet<br/>10.0.1.0/24]
-                
-                NAT1[🔀 NAT Gateway]
-                
-                PublicSubnet1 --> NAT1
-                NAT1 --> PrivateSubnet1
-            end
-            
-            subgraph "Availability Zone 2"
-                PublicSubnet2[🌍 Public Subnet<br/>10.0.2.0/24]
-                PrivateSubnet2[🔒 Private Subnet<br/>10.0.3.0/24]
-                
-                NAT2[🔀 NAT Gateway]
-                
-                PublicSubnet2 --> NAT2
-                NAT2 --> PrivateSubnet2
-            end
-            
-            subgraph "Private Resources"
-                LambdaSG[🛡️ Lambda SG]
-                NeptuneSG[🛡️ Neptune SG]
-                OSSG[🛡️ OpenSearch SG]
-                
-                Lambda1[⚡ Lambda Functions]
-                Neptune1[🔵 Neptune Primary]
-                Neptune2[🔵 Neptune Replica]
-                OS1[🔍 OpenSearch Node 1]
-                OS2[🔍 OpenSearch Node 2]
-                
-                Lambda1 -.->|Port 8182| NeptuneSG
-                Lambda1 -.->|Port 443| OSSG
-                
-                NeptuneSG --> Neptune1
-                NeptuneSG --> Neptune2
-                OSSG --> OS1
-                OSSG --> OS2
-            end
-            
-            IGW[🌐 Internet Gateway]
-            
-            PublicSubnet1 --> IGW
-            PublicSubnet2 --> IGW
-            
-            PrivateSubnet1 --> Lambda1
-            PrivateSubnet2 --> Lambda1
-            
-            PrivateSubnet1 --> Neptune1
-            PrivateSubnet2 --> Neptune2
-            
-            PrivateSubnet1 --> OS1
-            PrivateSubnet2 --> OS2
-        end
-        
-        Internet[🌍 Internet]
-        Internet --> IGW
-    end
+    Internet["Internet"]
+    IGW["Internet Gateway"]
+    NAT1["NAT Gateway AZ1"]
+    NAT2["NAT Gateway AZ2"]
+    PublicSubnet1["Public Subnet 1 - 10.0.0.0/24"]
+    PublicSubnet2["Public Subnet 2 - 10.0.2.0/24"]
+    PrivateSubnet1["Private Subnet 1 - 10.0.1.0/24"]
+    PrivateSubnet2["Private Subnet 2 - 10.0.3.0/24"]
+    Lambda1["Lambda Functions"]
+    Neptune1["Neptune Primary"]
+    Neptune2["Neptune Replica"]
+    OS1["OpenSearch Node 1"]
+    OS2["OpenSearch Node 2"]
+
+    Internet --> IGW
+    IGW --> PublicSubnet1
+    IGW --> PublicSubnet2
+    PublicSubnet1 --> NAT1
+    PublicSubnet2 --> NAT2
+    NAT1 --> PrivateSubnet1
+    NAT2 --> PrivateSubnet2
+    PrivateSubnet1 --> Lambda1
+    PrivateSubnet1 --> Neptune1
+    PrivateSubnet1 --> OS1
+    PrivateSubnet2 --> Neptune2
+    PrivateSubnet2 --> OS2
+    Lambda1 -.->|Port 8182| Neptune1
+    Lambda1 -.->|Port 443| OS1
 
     style PrivateSubnet1 fill:#FF6B6B,stroke:#C92A2A
     style PrivateSubnet2 fill:#FF6B6B,stroke:#C92A2A
@@ -355,42 +234,25 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "Lambda Functions in VPC"
-        L1[⚡ Neptune Writer]
-        L2[⚡ OpenSearch Writer]
-        L3[⚡ Validator]
-    end
-
-    subgraph "Neptune Cluster"
-        NepPrimary[🔵 Neptune Primary<br/>db.t3.medium<br/>Write Endpoint]
-        NepReplica[🔵 Neptune Replica<br/>db.t3.medium<br/>Read Endpoint]
-        
-        NepPrimary -->|Replication| NepReplica
-        
-        NepData[(RDF Triples<br/>Ontology<br/>SPARQL)]
-    end
-
-    subgraph "OpenSearch Domain"
-        OSNode1[🔍 Node 1<br/>t3.small.search<br/>Data Node]
-        OSNode2[🔍 Node 2<br/>t3.small.search<br/>Data Node]
-        
-        OSNode1 <-->|Cluster Sync| OSNode2
-        
-        OSData[(Embeddings<br/>k-NN Index<br/>Metadata)]
-    end
-
-    subgraph "S3 Staging"
-        S3Stage[🪣 S3<br/>neptune-staging/]
-    end
+    L1["Neptune Writer Lambda"]
+    L2["OpenSearch Writer Lambda"]
+    L3["Validator Lambda"]
+    S3Stage["S3 Staging - neptune-staging/"]
+    NepPrimary["Neptune Primary - db.t3.medium"]
+    NepReplica["Neptune Replica - db.t3.medium"]
+    NepData[("RDF Triples & Ontology")]
+    OSNode1["OpenSearch Node 1 - t3.small.search"]
+    OSNode2["OpenSearch Node 2 - t3.small.search"]
+    OSData[("Embeddings & k-NN Index")]
 
     L1 -->|1. Write RDF| S3Stage
     S3Stage -->|2. Bulk Load| NepPrimary
     NepPrimary -->|3. Store| NepData
-    
+    NepPrimary -->|Replication| NepReplica
     L3 -->|Query Ontology| NepPrimary
     NepPrimary -->|OWL Rules| L3
-    
     L2 -->|Index Vectors| OSNode1
+    OSNode1 <-->|Cluster Sync| OSNode2
     OSNode1 -->|Store| OSData
     
     style NepData fill:#3B48CC
@@ -480,33 +342,20 @@ classDiagram
 
 ```mermaid
 graph LR
-    subgraph "Text Processing"
-        Chunks[📝 Text Chunks<br/>From Document]
-    end
-
-    subgraph "Lambda Function"
-        EmbedLambda[⚡ Embedding Generator<br/>Lambda]
-        
-        Batch[Batch Chunks]
-        Invoke[Invoke Endpoint]
-        Collect[Collect Vectors]
-    end
-
-    subgraph "SageMaker"
-        Endpoint[🤖 SageMaker Endpoint<br/>ml.m5.large]
-        Model[🤗 Hugging Face Model<br/>all-mpnet-base-v2<br/>768 dimensions]
-        
-        Endpoint --> Model
-    end
-
-    subgraph "Vector Storage"
-        Vectors[📊 Embeddings<br/>768-dim vectors]
-    end
+    Chunks["Text Chunks from Document"]
+    EmbedLambda["Embedding Generator Lambda"]
+    Batch["Batch Chunks"]
+    Invoke["Invoke Endpoint"]
+    Collect["Collect Vectors"]
+    Endpoint["SageMaker Endpoint ml.m5.large"]
+    Model["Hugging Face Model all-mpnet-base-v2"]
+    Vectors["Embeddings 768-dim vectors"]
 
     Chunks --> EmbedLambda
     EmbedLambda --> Batch
     Batch --> Invoke
     Invoke -->|HTTP POST| Endpoint
+    Endpoint --> Model
     Model -->|JSON Response| Invoke
     Invoke --> Collect
     Collect --> Vectors
@@ -530,29 +379,15 @@ pie title Monthly Cost Distribution (~$259/month)
 
 ```mermaid
 graph TB
-    subgraph "User Query"
-        UserQ[👤 User Query<br/>"What are security policies?"]
-    end
-
-    subgraph "Query Processing"
-        API2[🌐 API Gateway<br/>POST /query]
-        QueryLambda[⚡ Query Lambda]
-        EmbedQ[Generate Query<br/>Embedding]
-    end
-
-    subgraph "Retrieval"
-        OSQuery[🔍 OpenSearch<br/>k-NN Search]
-        NepQuery[🔵 Neptune<br/>Graph Traversal]
-    end
-
-    subgraph "ML Generation"
-        SageMakerLLM[🤖 SageMaker<br/>LLM Endpoint]
-        Context[📝 Enriched Context]
-    end
-
-    subgraph "Response"
-        Answer[💬 Generated Answer<br/>with Citations]
-    end
+    UserQ["User Query"]
+    API2["API Gateway POST /query"]
+    QueryLambda["Query Lambda"]
+    EmbedQ["Generate Query Embedding"]
+    OSQuery["OpenSearch k-NN Search"]
+    NepQuery["Neptune Graph Traversal"]
+    Context["Enriched Context"]
+    SageMakerLLM["SageMaker LLM Endpoint"]
+    Answer["Generated Answer with Citations"]
 
     UserQ --> API2
     API2 --> QueryLambda
@@ -560,7 +395,7 @@ graph TB
     EmbedQ -->|Vector| OSQuery
     OSQuery -->|Top-k Chunks| Context
     QueryLambda -->|Document IDs| NepQuery
-    NepQuery -->|Related Entities<br/>& Relationships| Context
+    NepQuery -->|Related Entities| Context
     Context --> SageMakerLLM
     SageMakerLLM --> Answer
     Answer --> UserQ
@@ -573,28 +408,25 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph "AWS Services"
-        API[🌐 API Gateway]
-        Lambda[⚡ Lambda]
-        S3[🪣 S3]
-        EB[📡 EventBridge]
-        SF[🔄 Step Functions]
-        Nep[🔵 Neptune]
-        OS[🔍 OpenSearch]
-        SM[🤖 SageMaker]
-        SQS[📮 SQS]
-        CW[📊 CloudWatch]
-    end
+    API["API Gateway"]
+    Lambda["Lambda"]
+    S3["S3"]
+    EB["EventBridge"]
+    SF["Step Functions"]
+    Nep["Neptune"]
+    OS["OpenSearch"]
+    SM["SageMaker"]
+    SQS2["SQS"]
+    CW2["CloudWatch"]
+    New["NEW FEATURE - Ontology Validation"]
+    Existing["Existing Feature"]
+    A["Service A"]
+    B["Service B"]
+    C["Service C"]
+    D["Service D"]
 
-    subgraph "Features"
-        New[🆕 NEW FEATURE<br/>Ontology Validation]
-        Existing[Existing Feature]
-    end
-
-    subgraph "Data Flow"
-        A -->|Synchronous| B
-        C -.->|Asynchronous| D
-    end
+    A -->|Synchronous| B
+    C -.->|Asynchronous| D
 
     style New fill:#00D4AA,stroke:#232F3E,stroke-width:3px
     style Existing fill:#FF9900,stroke:#232F3E,stroke-width:2px
