@@ -23,24 +23,24 @@ graph TB
     OWL["OWL Ontology - graph-rag-ontology.ttl NEW"]
     CloudWatch["CloudWatch - Logs"]
 
-    User -->|1. Upload| APIGW
-    APIGW -->|2. Invoke| UploadLambda
-    UploadLambda -->|3. Store| S3
-    S3 -.->|4. Event| EventBridge
-    EventBridge -->|5. Trigger| StepFunctions
+    User -->|Upload| APIGW
+    APIGW -->|Invoke| UploadLambda
+    UploadLambda -->|Store| S3
+    S3 -.->|Event| EventBridge
+    EventBridge -->|Trigger| StepFunctions
     EventBridge -.->|Failed| DLQ
-    StepFunctions -->|6. Parse| DocParser
-    DocParser -->|7. Text| RDFGen
-    RDFGen -->|8. RDF| OntologyVal
-    OntologyVal -->|9. Validate| OWL
-    OntologyVal -->|10a. Valid| NeptuneWriter
-    OntologyVal -->|10b. Chunks| EmbedGen
-    NeptuneWriter -->|11. Stage| S3
-    S3 -->|12. Load| Neptune
-    EmbedGen -->|13. Generate| SageMaker
-    SageMaker -->|14. Vectors| EmbedGen
-    EmbedGen -->|15. Index| OSWriter
-    OSWriter -->|16. Store| OpenSearch
+    StepFunctions -->|Parse| DocParser
+    DocParser -->|Text| RDFGen
+    RDFGen -->|RDF| OntologyVal
+    OntologyVal -->|Validate| OWL
+    OntologyVal -->|Valid RDF| NeptuneWriter
+    OntologyVal -->|Chunks| EmbedGen
+    NeptuneWriter -->|Stage| S3
+    S3 -->|Load| Neptune
+    EmbedGen -->|Generate| SageMaker
+    SageMaker -->|Vectors| EmbedGen
+    EmbedGen -->|Index| OSWriter
+    OSWriter -->|Store| OpenSearch
     StepFunctions -.->|Logs| CloudWatch
     
     classDef awsOrange fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#fff
