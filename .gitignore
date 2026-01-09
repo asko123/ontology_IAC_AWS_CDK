@@ -32,3 +32,6 @@ coverage
 .env
 .env.local
 
+# Documentation (keep local only)
+*.md
+
