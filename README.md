@@ -15,6 +15,22 @@ This project provisions a complete Graph RAG (Retrieval Augmented Generation) in
 
 📖 **See**: [DATA_SEPARATION_STRATEGY.md](DATA_SEPARATION_STRATEGY.md) for complete details
 
+## 🏗️ Infrastructure as Code (IAC) Documentation
+
+**Complete IAC documentation suite** (2,250+ lines) covering all AWS CDK implementation aspects:
+
+| Document | Purpose | When to Use |
+|----------|---------|-------------|
+| **[IAC_INDEX.md](IAC_INDEX.md)** 📑 | Navigation & documentation index | Find what you need |
+| **[IAC_QUICK_REFERENCE.md](IAC_QUICK_REFERENCE.md)** ⚡ | Commands & quick lookup | Daily operations |
+| **[IAC_GUIDE.md](IAC_GUIDE.md)** 📖 | Comprehensive IAC guide | Understanding & customization |
+| **[IAC_STACK_REFERENCE.md](IAC_STACK_REFERENCE.md)** 📋 | Complete resource catalog | Resource details & config |
+
+**6 CDK Stacks** | **47 AWS Resources** | **1,600 lines of infrastructure code**
+
+👉 **New to CDK?** Start with [IAC_QUICK_REFERENCE.md](IAC_QUICK_REFERENCE.md)  
+👉 **Need details?** See [IAC_GUIDE.md](IAC_GUIDE.md) for comprehensive coverage
+
 ## Prerequisites
 - Node.js 18+ and npm
 - AWS CLI configured with appropriate credentials
