@@ -46,12 +46,8 @@
 ###  TextChunk Class
 :TextChunk rdf:type owl:Class ;
     rdfs:label "Text Chunk"@en ;
-    rdfs:comment "A segment of text extracted from a document for processing and embedding generation."@en ;
+    rdfs:comment "A reference to a text segment from a document. Full text is stored in OpenSearch, while Neptune stores only metadata and relationships."@en ;
     rdfs:subClassOf [ rdf:type owl:Restriction ;
-                      owl:onProperty :hasText ;
-                      owl:cardinality "1"^^xsd:nonNegativeInteger
-                    ] ,
-                    [ rdf:type owl:Restriction ;
                       owl:onProperty :hasChunkId ;
                       owl:cardinality "1"^^xsd:nonNegativeInteger
                     ] ,
@@ -60,13 +56,24 @@
                       owl:cardinality "1"^^xsd:nonNegativeInteger
                     ] ,
                     [ rdf:type owl:Restriction ;
-                      owl:onProperty :hasEmbedding ;
+                      owl:onProperty :hasOpenSearchId ;
+                      owl:cardinality "1"^^xsd:nonNegativeInteger
+                    ] ,
+                    [ rdf:type owl:Restriction ;
+                      owl:onProperty :hasTextExcerpt ;
                       owl:maxCardinality "1"^^xsd:nonNegativeInteger
                     ] ,
                     [ rdf:type owl:Restriction ;
                       owl:onProperty :mentions ;
                       owl:minCardinality "0"^^xsd:nonNegativeInteger
                     ] .
+###  IMPORTANT DESIGN NOTE:
+###  TextChunk in Neptune stores only metadata and graph relationships.
+###  Full chunk text and embeddings are stored in OpenSearch for:
+###  - Vector similarity search (k-NN)
+###  - Full-text search
+###  - Efficient retrieval
+###  This avoids data duplication and optimizes each system for its strength.
 
 ###  Entity Class
 :Entity rdf:type owl:Class ;
@@ -234,10 +241,22 @@
     rdfs:domain :TextChunk ;
     rdfs:range xsd:integer .
 
+:hasOpenSearchId rdf:type owl:DatatypeProperty ;
+    rdfs:label "has OpenSearch identifier"@en ;
+    rdfs:comment "Reference to the corresponding document in OpenSearch where full chunk text and embedding are stored."@en ;
+    rdfs:domain :TextChunk ;
+    rdfs:range xsd:string .
+
 ###  Text Content Properties
 :hasText rdf:type owl:DatatypeProperty ;
     rdfs:label "has text"@en ;
-    rdfs:comment "The text content of a chunk or entity."@en ;
+    rdfs:comment "The full text content (DEPRECATED for chunks - use OpenSearch instead)."@en ;
+    rdfs:range xsd:string .
+
+:hasTextExcerpt rdf:type owl:DatatypeProperty ;
+    rdfs:label "has text excerpt"@en ;
+    rdfs:comment "A small excerpt (first 100 chars) of chunk text for context. Full text is in OpenSearch."@en ;
+    rdfs:domain :TextChunk ;
     rdfs:range xsd:string .
 
 :hasFileName rdf:type owl:DatatypeProperty ;
@@ -360,10 +379,12 @@
 
 :exampleChunk rdf:type owl:NamedIndividual , :TextChunk ;
     :hasChunkId "0"^^xsd:integer ;
-    :hasText "This is an example text chunk from a security policy document." ;
+    :hasTextExcerpt "This is an example text chunk from a security policy..." ;
+    :hasOpenSearchId "example-uuid-123-0" ;
     :hasStartPosition "0"^^xsd:integer ;
     :hasLength "63"^^xsd:integer ;
-    :partOf :examplePolicy .
+    :partOf :examplePolicy ;
+    rdfs:comment "Full text and embedding stored in OpenSearch with ID: example-uuid-123-0"@en .
 
 :exampleEntity rdf:type owl:NamedIndividual , :Organization ;
     :hasValue "AWS" ;

@@ -237,6 +237,11 @@ def generate_rdf_graph(
         })
     
     # ===== Chunk triples =====
+    # 
+    # DESIGN DECISION: Store minimal chunk metadata in Neptune (graph relationships only)
+    # Full chunk text and embeddings are stored in OpenSearch for vector search
+    # Neptune stores: chunk reference, position, length, and entity relationships
+    # This avoids data duplication and improves Neptune performance
     
     for chunk in chunks:
         chunk_id = chunk.get('chunkId', 0)
@@ -244,7 +249,7 @@ def generate_rdf_graph(
         
         chunk_uri = f"{doc_uri}/chunk/{chunk_id}"
         
-        # Chunk entity
+        # Chunk entity - reference only
         triples.append({
             'subject': chunk_uri,
             'predicate': 'rdf:type',
@@ -257,12 +262,18 @@ def generate_rdf_graph(
             'object': f'"{chunk_id}"^^xsd:integer',
         })
         
-        triples.append({
-            'subject': chunk_uri,
-            'predicate': f'{NAMESPACE_ONTO}hasText',
-            'object': f'"{escape_literal(chunk_text[:500])}"',  # Truncate for RDF storage
-        })
+        # IMPORTANT: Do NOT store full chunk text in Neptune
+        # Full text is in OpenSearch for vector search
+        # Only store a small excerpt (first 100 chars) for context/debugging
+        if chunk_text:
+            excerpt = chunk_text[:100].strip() + ('...' if len(chunk_text) > 100 else '')
+            triples.append({
+                'subject': chunk_uri,
+                'predicate': f'{NAMESPACE_ONTO}hasTextExcerpt',
+                'object': f'"{escape_literal(excerpt)}"',
+            })
         
+        # Store chunk metadata (position and length) for reference
         triples.append({
             'subject': chunk_uri,
             'predicate': f'{NAMESPACE_ONTO}hasStartPosition',
@@ -275,7 +286,16 @@ def generate_rdf_graph(
             'object': f'"{chunk.get("length", 0)}"^^xsd:integer',
         })
         
-        # Chunk belongs to document
+        # Link chunk to OpenSearch for full text retrieval
+        # Store OpenSearch document ID for lookup
+        opensearch_doc_id = f"{document_id}-{chunk_id}"
+        triples.append({
+            'subject': chunk_uri,
+            'predicate': f'{NAMESPACE_ONTO}hasOpenSearchId',
+            'object': f'"{opensearch_doc_id}"',
+        })
+        
+        # Chunk belongs to document (graph relationship)
         triples.append({
             'subject': doc_uri,
             'predicate': f'{NAMESPACE_ONTO}hasChunk',

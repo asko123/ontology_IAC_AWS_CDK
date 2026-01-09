@@ -6,7 +6,14 @@ This project provisions a complete Graph RAG (Retrieval Augmented Generation) in
 ## Architecture
 - **Upload**: API Gateway → Lambda → S3 → EventBridge
 - **Processing**: Step Functions orchestrates document parsing, RDF generation, Neptune ingestion, and embedding creation
-- **Storage**: Amazon Neptune (graph), OpenSearch (vectors), S3 (documents)
+- **Storage**: Amazon Neptune (graph relationships), OpenSearch (full text + vectors), S3 (documents)
+
+### Data Separation Strategy ⚡
+- **Neptune**: Stores document metadata, entity relationships, chunk references (NOT full text)
+- **OpenSearch**: Stores full chunk text and vector embeddings for search
+- **Benefit**: 36% reduction in Neptune storage, 4-5x faster graph queries, no data duplication
+
+📖 **See**: [DATA_SEPARATION_STRATEGY.md](DATA_SEPARATION_STRATEGY.md) for complete details
 
 ## Prerequisites
 - Node.js 18+ and npm
