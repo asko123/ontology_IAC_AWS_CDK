@@ -366,11 +366,37 @@ graph LR
 
 ## Cost Breakdown
 
+### Monthly Cost Distribution (~$259/month)
+
+| Service | Instance/Configuration | Cost/Month | Percentage | Use Case |
+|---------|----------------------|------------|------------|----------|
+| **SageMaker** | ml.m5.large (24/7) | $84 | 32% | Embedding generation |
+| **Neptune** | db.t3.medium (Primary + Replica) | $70 | 27% | Graph database |
+| **OpenSearch** | 2× t3.small.search nodes | $60 | 23% | Vector search + storage |
+| **NAT Gateway** | 1 gateway in 1 AZ | $35 | 14% | Private subnet internet access |
+| **Lambda & Other** | 6 functions + Step Functions + API Gateway | $10 | 4% | Processing & orchestration |
+| **TOTAL** | | **$259** | **100%** | Complete system |
+
+### Cost Optimization Options
+
+**Quick Wins**:
+- 💰 **Save $48/month**: Use ml.t3.medium for SageMaker (dev/testing)
+- 💰 **Save $48-$74/month**: Use SageMaker Serverless for low volume (< 1000 docs/day)
+- 💰 **Save $35/month**: Remove NAT Gateway (use VPC endpoints instead)
+- 💰 **Save $28/month**: Use 1 OpenSearch node (non-HA)
+
+**Long-term Savings**:
+- 💰 **Save 20-64%**: SageMaker Savings Plans
+- 💰 **Save 40-60%**: Neptune Reserved Instances
+- 💰 **Save 30-45%**: OpenSearch Reserved Instances
+
+### Alternative Pie Chart (Optional)
+
 ```mermaid
 pie title Monthly Cost Distribution (~$259/month)
+    "SageMaker (ml.m5.large)" : 84
     "Neptune (db.t3.medium)" : 70
     "OpenSearch (2x t3.small)" : 60
-    "SageMaker (ml.m5.large)" : 84
     "NAT Gateway" : 35
     "Lambda & Other" : 10
 ```
